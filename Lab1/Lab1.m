@@ -110,6 +110,31 @@ figure(4);imagesc(uint8(img2t)-img2)
 %There is a car in the picture who is moving. So in the second image the
 %car is covering more of the picture then in image1
 
+%% 4.3 Homogeneous solution
+%A = A(1:8,:); %A0
+
+[U S V] = svd(A);
+H3 = reshape(V(:,end),3,3);
+
+z3 = [H3(1:3),H3(4:6),H3(7:9)]';
+
+minError = abs(A*z3); %Corresponding calc for the minimal case
+
+
+
+%% Geometric error as in 4.2
+
+y2b3 = vgg_get_nonhomg(H3*y1);
+y1b3 = vgg_get_nonhomg(inv(H3)*y2);
+
+e3 = 0;
+for k = 1:length(y1),
+    e3 = e3 + norm(vgg_get_nonhomg(y2(:,k))-y2b3(:,k))^2 + ...
+        + norm(vgg_get_nonhomg(y1(:,k))-y1b3(:,k))^2;
+end
+e3 = sqrt(e3);
+
+%ANSWER: e1 = 1.9029 e3 = 1.9032 Almost the same
 
 %% Set another element then the last to 1
 
@@ -123,6 +148,7 @@ z2 = [1 ; z2];
 H2min = [z2(1:3) z2(4:6) z2(7:9)];
 
 H2 = H2min;
+
 y2b2 = vgg_get_nonhomg(H2*y1);
 y1b2 = vgg_get_nonhomg(inv(H2)*y2);
 
@@ -140,41 +166,135 @@ figure(6);plot(y2b3(1,:),y2b3(2,:),'rx');
 
 %This shows the same result as with 1 in the last element
 %Rational reason to set a particular element to 1??????????????????
+% It doesn't matter which position is set to 1 but it's easier to do
+% caluclations if the first/last is set to 1
 
-%% 4.3 Homogeneous solution
-%A = A(1:8,:); %A0
-[U S V] = svd(A);
-H3 = reshape(V(:,end),3,3);
-
-z3 = [H3(1:3),H3(4:6),H3(7:9)]';
-
-minError = abs(A*z3); %Corresponding calc for the minimal case
-
-%% Geometric error as in 4.2
-
-y2b3 = vgg_get_nonhomg(H3*y1);
-y1b3 = vgg_get_nonhomg(inv(H3)*y2);
-
-e3 = 0;
-for k = 1:length(y1),
-    e3 = e3 + norm(vgg_get_nonhomg(y2(:,k))-y2b3(:,k))^2 + ...
-        + norm(vgg_get_nonhomg(y1(:,k))-y1b3(:,k))^2;
-end
-e3 = sqrt(e3);
-
-%ANSWER: e1 = 1.9029 e3 = 1.9032 Almost the same
 
 %% 4.4 Hartley-transformation
 
-
+diag(S)';
+figure(7);plot(log(diag(S)),'o');
  
+% ANSWER: Nja they do not really represent a well-defined solution
+
+
+[y1t T1]= liu_preconditioning(y1);
+[y2t T2]= liu_preconditioning(y2);
+
+y1tMeanDistance = 0;
+
+for i = 1:length(y1t)
+    y1tMeanDistance = y1tMeanDistance + sqrt(y1t(1,i).^2+y1t(2,i).^2);
+end
 
 
 
+y1tMeanDistance = y1tMeanDistance/length(y1t);
+    
+% ANSWER: y1tMeanDistance = 1.4142 = sqrt(2) -> The condition is satisfied!
+% mean(y1t(1,:)) ~ 0
+
+%%
+
+At = [];
+N = 8;
+
+
+for cnt=1:N
+    u = [y1t(1,cnt) y2t(1,cnt)];
+    v = [y1t(2,cnt) y2t(2,cnt)];
+    
+    At = [At; [u(1) 0 -u(1)*u(2) v(1) 0 -v(1)*u(2) 1 0 -u(2)];
+            [0 u(1) -u(1)*v(2) 0 v(1) -v(1)*v(2) 0 1 -v(2)]];
+end
+        
+[Ut St Vt]=svd(At);
+Ht = reshape(Vt(:,end),3,3);
+
+H4 = T1^-1*Ht*T2;
+y2b4 = vgg_get_nonhomg(H4*y1);
+y1b4 = vgg_get_nonhomg(inv(H4)*y2);
+
+
+%% Print and plot At
+
+diag(St)';
+figure(5);plot(log(diag(St)),'o');
+
+% ANSWER: YES!! Awesome values!
+
+%%  Symmetric geometric error of H4
+
+e4 = 0;
+
+
+for k = 1:length(y1),
+    e4 = e4 + norm(vgg_get_nonhomg(y2(:,k))-y2b4(:,k))^2 + ...
+        + norm(vgg_get_nonhomg(y1(:,k))-y1b4(:,k))^2;
+end
+e4 = sqrt(e4);
+
+%ANSWER: e4 = 654.2985 VERY big!!
+
+%% 4.5 Ground Truth
+
+load -ascii H1to2p
+y2bGT = vgg_get_nonhomg(H1to2p*y1);
+y1bGT = vgg_get_nonhomg(inv(H1to2p)*y2);
+
+eGTtoH1 = 0;
+
+for k = 1:length(y1b),
+    eGTtoH1 = eGTtoH1 + norm(y2b(:,k)-y2bGT(:,k))^2 + ...
+        + norm(y1b(:,k)-y1bGT(:,k))^2;
+end
+eGTtoH1 = sqrt(eGTtoH1);
+
+%ANSWER: eGTtoH1 = 4.8963
+
+eGTtoH2 = 0;
+
+for k = 1:length(y1b),
+    eGTtoH2 = eGTtoH2 + norm(y2b2(:,k)-y2bGT(:,k))^2 + ...
+        + norm(y1b2(:,k)-y1bGT(:,k))^2;
+end
+eGTtoH2 = sqrt(eGTtoH2);
+    
+
+eGTtoH4 = 0;
+
+for k = 1:length(y1b),
+    eGTtoH4 = eGTtoH4 + norm(y2b4(:,k)-y2bGT(:,k))^2 + ...
+        + norm(y1b4(:,k)-y1bGT(:,k))^2;
+end
+eGTtoH4 = sqrt(eGTtoH4);
+
+% ANSWER: eGTtoH2 = 4.8961, eGTtoH4 = 652.1485
+% H2 is the closest to the ground truth
+
+%% 4.6 Transformations of Lines
+
+y1line = y1(1:3,1:2);
+deltax = y1line(1,1)-y1line(1,2);
+deltay = y1line(2,1)-y1line(2,2);
+k = deltay/deltax;
+m = y1line(2,1)-k*y1line(1,1);
+
+
+l1 = -1/sqrt(k^2+1).*[k; -1; m];
+figure(1);drawline(l1,'axis','xy');
+
+%l2 =  vgg_get_nonhomg(H1*l1);
+%l22 = vgg_get_nonhomg(H1'*l2);
+
+%l2 = 1/sqrt(l2(1)^2+l2(2)^2)*l2;
+
+%figure(2);drawline(l2,'axis','xy');
 
 
 
+% Funkar ej helt!!!
 
-
+%% 
 
 
