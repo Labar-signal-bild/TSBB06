@@ -1,4 +1,7 @@
 %% Lab1 uppgift 4
+%%
+% 
+% 
 
 img1=imread('img1.ppm');
 img2=imread('img2.ppm');
@@ -275,26 +278,96 @@ eGTtoH4 = sqrt(eGTtoH4);
 %% 4.6 Transformations of Lines
 
 y1line = y1(1:3,1:2);
-deltax = y1line(1,1)-y1line(1,2);
-deltay = y1line(2,1)-y1line(2,2);
-k = deltay/deltax;
-m = y1line(2,1)-k*y1line(1,1);
 
+x1 = y1line(1:3,1);
+x2 = y1line(1:3,2);
 
-l1 = -1/sqrt(k^2+1).*[k; -1; m];
+l1plu = x1*x2'-x2*x1';
+l2plu = H1*l1plu*H1';
+
+k1 = l1plu(2,3)/l1plu(1,3);
+m1 = l1plu(1,2)/l1plu(1,3);
+l1 = [k1; -1; m1];
 figure(1);drawline(l1,'axis','xy');
 
-%l2 =  vgg_get_nonhomg(H1*l1);
-%l22 = vgg_get_nonhomg(H1'*l2);
+k2 = l2plu(2,3)/l2plu(1,3);
+m2 = l2plu(1,2)/l2plu(1,3)
+l2 = [k2; -1; m2];
 
-%l2 = 1/sqrt(l2(1)^2+l2(2)^2)*l2;
+figure(2);drawline(l2,'axis','xy');
 
-%figure(2);drawline(l2,'axis','xy');
-
-
-
-% Funkar ej helt!!!
+% SJUKT SNYGGT!!!!
 
 %% 
 
+y1onLine = vgg_get_homg([33 279; 267 447; 6 259; 83 311; 193 395; 321 487; 371 522; 420 556]');
+y2onLine = round(H1*y1onLine);
+
+N = length(y1onLine);
+
+ALine = [];
+
+for cnt=1:N
+    u = [y1onLine(1,cnt) y2onLine(1,cnt)];
+    v = [y1onLine(2,cnt) y2onLine(2,cnt)];
+    
+    ALine = [ALine; [u(1) 0 -u(1)*u(2) v(1) 0 -v(1)*u(2) 1 0 -u(2)];
+            [0 u(1) -u(1)*v(2) 0 v(1) -v(1)*v(2) 0 1 -v(2)]];
+end
+
+[Ul Sl Vl] = svd(ALine);
+HLine = reshape(Vl(:,end),3,3);
+
+zLine = [HLine(1:3),H3(4:6),H3(7:9)]';
+
+minError = abs(ALine*z3); %Corresponding calc for the minimal cas
+
+diag(Sl)';
+figure(8);plot(log(diag(Sl)),'o');
+
+%ANSWER: The SVD have two points thats low... Not good
+
+
+[y1onLinet T1Line]= liu_preconditioning(y1onLine);
+[y2onLinet T2Line]= liu_preconditioning(y2onLine);
+
+y1onLinetMeanDistance = 0;
+
+for i = 1:length(y1onLinet)
+    y1onLinetMeanDistance = y1onLinetMeanDistance + sqrt(y1onLinet(1,i).^2+y1onLinet(2,i).^2);
+end
+
+
+
+y1onLinetMeanDistance = y1onLinetMeanDistance/length(y1onLinet);
+
+
+AonLinet = [];
+N = 8;
+
+
+for cnt=1:N
+    u = [y1onLinet(1,cnt) y2onLinet(1,cnt)];
+    v = [y1onLinet(2,cnt) y2onLinet(2,cnt)];
+    
+    AonLinet = [AonLinet; [u(1) 0 -u(1)*u(2) v(1) 0 -v(1)*u(2) 1 0 -u(2)];
+            [0 u(1) -u(1)*v(2) 0 v(1) -v(1)*v(2) 0 1 -v(2)]];
+end
+        
+[UonLinet SonLinet VonLinet]=svd(AonLinet);
+HonLinet = reshape(VonLinet(:,end),3,3);
+
+HLINE = T1Line^-1*HLine*T2Line;
+y2bonLine = vgg_get_nonhomg(HLINE*y1onLine);
+y1bonLine = vgg_get_nonhomg(inv(HLINE)*y2onLine);
+
+diag(SonLinet)';
+figure(9);plot(log(diag(SonLinet)),'o');
+
+%%
+
+img2tonLine=image_resample(double(img1),HLINE,640,800); %640, 800 size of image1
+figure(10);imagesc(uint8(img2tonLine))
+
+%Just a black figure, something is probably wrong
 
