@@ -9,27 +9,19 @@ c = (trace(R)-1)/2;
 s = norm(v);
 
 if s == 0
-    display('---- s=0 ----');
     if c > 0
-        display('---- c>0 ----');
         n = 2*rand(3,1)-1;
         n = n/norm(n);
         angle = 0;
     else
-        display('---- c<=0 ----');
-        [evec eval] = eig(R+eye(3));
-        pos = find(max(eval)==eval);
-        n = evec(:,pos);
-        
-        %n = v/s;
+        []= eig(R+eye(3))    
+        n = v/s;
         angle = pi;
         
     end
 else
-    display('----normal case ----')
     n = v/s;
-    s/c
-    angle = atan2(s,c);
+    angle = atan(s/c);
 end
 end
 
