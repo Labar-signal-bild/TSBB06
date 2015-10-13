@@ -1,0 +1,6 @@
+function [xprim] = sandwichproduct(rotmatrix, p)
+
+xprim = 
+
+end
+

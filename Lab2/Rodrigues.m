@@ -5,8 +5,7 @@ function [R] = Rodrigues( n,angle )
 
 nx = q*p'-p*q';
 
-
-R = eye(3)+(1-cos(angle)).*nx^2+sin(angle).*nx;
+R = eye(3)+(1-cos(angle))*nx*nx+sin(angle)*nx;
 
 end
 

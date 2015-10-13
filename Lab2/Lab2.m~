@@ -1,0 +1,36 @@
+%% Förberedelser
+
+n = 2*rand(3,1)-1;
+n = n/norm(n);
+alpha = 2*pi*rand(1,1);
+
+rotationmatrix = Rodrigues(n, alpha);
+
+[newn, newalpha] = angleAxis(rotationmatrix);
+expR = createExpR(n, alpha);
+
+%rotationmatrix och expR ser ej likadana ut. Det(expR) = -1, Det(rotmat)=1
+
+
+%%  4.1 
+
+rotationmatrix*n;
+
+% ANSWER: R*n = n. As expected
+
+n;
+newn;
+alpha;
+newalpha;
+
+% NO! n is correct but not alpha
+
+%% 4.2
+
+% ANSWER: No, rotationmatrix and expR is not the same..
+
+[e1 l1]=eig(expR)
+[e2 l2]=eig(alpha*liu_crossop(n))
+
+
+
