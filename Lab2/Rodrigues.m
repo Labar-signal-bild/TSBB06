@@ -1,11 +1,7 @@
 function [R] = Rodrigues( n,angle )
 %RODRIGUEZ Calculates the rotation matrix
 
-p = [-n(3);0;n(1)];
-q = cross(p,n);
-
-p = p/norm(p);
-q = q/norm(q);
+[p,q]=createONbasis(n);
 
 nx = q*p'-p*q';
 
