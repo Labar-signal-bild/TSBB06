@@ -1,15 +1,13 @@
 %% Lab1 uppgift 4
+% SVAR 4: ca 2px nogranhet
+
 %%
-% 
-% 
 
 img1=imread('img1.ppm');
 img2=imread('img2.ppm');
 
-
 figure(1);imagesc(img1);
 figure(2);imagesc(img2);
-
 
 y1 = vgg_get_homg([33 279; 267 447; 406 207; 528 223; 638 296; 635 6; 629 416; 742 178]');
 y2 = vgg_get_homg([77 410; 320 502; 356 254; 450 241; 548 280; 464 39; 576 384; 585 162]');
@@ -34,7 +32,7 @@ end
 
 %% 4.2 Imhomogeneous solution
 
-%A = A(1:8,:);
+%A = A(1:8,:); % Uncomment this to create a H with minimum points.
 
 A0 = A(:,1:8);
 b = A(:,9);
@@ -55,9 +53,10 @@ y1b = vgg_get_nonhomg(inv(H1)*y2);
 figure(1);plot(y1b(1,:),y1b(2,:),'rx');
 figure(2);plot(y2b(1,:),y2b(2,:),'rx');
 
-%ANSWER: Very close, about half a pixel wrong.
-%ANSWER: Yes, A*z ~ 0.1 - 0.8
-
+%ANSWER: The H1min transform for the minimum number of points is correct, by 
+%definition the H matrix is correct if A*z=0, in our case: A*z ~= 0 (s175)
+%ANSWER: Very close, about half a pixel wrong (looked at the images)
+%ANSWER: A*z ~= 0.1 - 0.8
 
 %%  Symmetric geometric error
 
@@ -68,7 +67,7 @@ for k = 1:length(y1),
 end
 e1 = sqrt(e1);
 
-%ANSWER: e1 = 1.9029 Kind of the same as expected
+%ANSWER: Expected error: sqrt(sum(abs(A*z))) = 1.9698. e1 = 1.9029 Kind of the same as expected
 
 
 %% Un-symmetric geometric error
@@ -107,21 +106,22 @@ figure(3);imagesc(uint8(img2t))
 figure(4);imagesc(uint8(img2t)-img2)
 
 %ANSWER: The lines show where the two images are different. The lines are
-%located where the theres a colorchange. In the bottom right corner0 of 
+%located where theres a colorchange. In the bottom right corner of 
 %figure 4 there's a lot of color, that's because in image1 this isn't even shown.
 
 %There is a car in the picture who is moving. So in the second image the
 %car is covering more of the picture then in image1
 
 %% 4.3 Homogeneous solution
-%A = A(1:8,:); %A0
+A = A(1:8,:); %A0
 
 [U S V] = svd(A);
 H3 = reshape(V(:,end),3,3);
 
 z3 = [H3(1:3),H3(4:6),H3(7:9)]';
 
-minError = abs(A*z3); %Corresponding calc for the minimal case
+minError = sum(abs(A*z3)); %Corresponding calc for the minimal case
+%minError = 0
 
 
 
@@ -168,7 +168,6 @@ figure(6);plot(y2b3(1,:),y2b3(2,:),'rx');
 
 
 %This shows the same result as with 1 in the last element
-%Rational reason to set a particular element to 1??????????????????
 % It doesn't matter which position is set to 1 but it's easier to do
 % caluclations if the first/last is set to 1
 
@@ -179,7 +178,6 @@ diag(S)';
 figure(7);plot(log(diag(S)),'o');
  
 % ANSWER: Nja they do not really represent a well-defined solution
-
 
 [y1t T1]= liu_preconditioning(y1);
 [y2t T2]= liu_preconditioning(y2);
@@ -229,15 +227,14 @@ figure(5);plot(log(diag(St)),'o');
 %%  Symmetric geometric error of H4
 
 e4 = 0;
-
-
 for k = 1:length(y1),
     e4 = e4 + norm(vgg_get_nonhomg(y2(:,k))-y2b4(:,k))^2 + ...
         + norm(vgg_get_nonhomg(y1(:,k))-y1b4(:,k))^2;
 end
 e4 = sqrt(e4);
 
-%ANSWER: e4 = 654.2985 VERY big!!
+
+%ANSWER: e4 = 654.2985 VERY big!! Is this correct??????????????
 
 %% 4.5 Ground Truth
 
@@ -252,6 +249,7 @@ for k = 1:length(y1b),
         + norm(y1b(:,k)-y1bGT(:,k))^2;
 end
 eGTtoH1 = sqrt(eGTtoH1);
+
 
 %ANSWER: eGTtoH1 = 4.8963
 
@@ -296,7 +294,7 @@ l2 = [k2; -1; m2];
 
 figure(2);drawline(l2,'axis','xy');
 
-% SJUKT SNYGGT!!!!
+% SJUKT SNYGGT!!!! The lines transforms to the places where they should!
 
 %% 
 
