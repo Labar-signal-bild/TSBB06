@@ -26,9 +26,9 @@ if s == 0
         
     end
 else
-    display('----normal case ----')
+    %display('----normal case ----')
     n = v/s;
-    angle = atan2(s,c);
+    angle = atan(s/c);
 end
 end
 

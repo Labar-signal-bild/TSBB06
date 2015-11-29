@@ -1,9 +1,0 @@
-function [R] = quaternionR(n, alpha)
-
-q = [cos(alpha/2); n*sin(alpha/2)]
-
-s = q(1);
-
-
-end
-

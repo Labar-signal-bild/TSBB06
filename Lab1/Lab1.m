@@ -32,7 +32,7 @@ end
 
 %% 4.2 Imhomogeneous solution
 
-%A = A(1:8,:); % Uncomment this to create a H with minimum points.
+A = A(1:8,:); % Uncomment this to create a H with minimum points.
 
 A0 = A(:,1:8);
 b = A(:,9);
@@ -212,7 +212,7 @@ end
 [Ut St Vt]=svd(At);
 Ht = reshape(Vt(:,end),3,3);
 
-H4 = T1^-1*Ht*T2;
+H4 = T2^-1*Ht*T1;
 y2b4 = vgg_get_nonhomg(H4*y1);
 y1b4 = vgg_get_nonhomg(inv(H4)*y2);
 
@@ -364,8 +364,7 @@ figure(9);plot(log(diag(SonLinet)),'o');
 
 %%
 
-img2tonLine=image_resample(double(img1),HLINE,640,800); %640, 800 size of image1
+img2tonLine=image_resample(double(img1),HLine,640,800); %640, 800 size of image1
 figure(10);imagesc(uint8(img2tonLine))
 
-%Just a black figure, something is probably wrong
 
