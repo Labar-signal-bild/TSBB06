@@ -2,6 +2,7 @@
 
 cd /site/edu/bb/MultidimensionalSignalAnalysis/ComputerExercises/ExerciseC/
 addpath /edu/annhj876
+
 %% Polynomial Expansion
 
 % Signal s
@@ -61,8 +62,8 @@ subplot(3,1,3);plot(c(3,:))
 % expansion  of  a  function,  as  described  in  preparatory  exercise  2.   
 % In  what way?
 % ANSWER: The first one looks like we expected, it should be the original
-% signal which it is. The second shold (the first order derivitive) be a
-% scaled cosine, which it is. The last one don't know. Ask??
+% signal which it is. The second should (the first order derivitive) be a
+% scaled cosine, which it is. The last one a sine with amplitude 0.01
 
 
 figure(5);
@@ -73,7 +74,10 @@ subplot(3,1,1);plot(localsig);
 subplot(3,1,2);plot(reconsig);
 subplot(3,1,3);plot(diffsig);
 
-% The reconstructed signal is similar to the original signal. Why: ????
+% The reconstructed signal is similar to the original signal. It's more
+% simular in the middle because the applicability function is 1 in the
+% middle and zero on the edges which means that it allows the signal to be
+% not as simular on the edges. 
 
 %% 4 Uncertain data
 
@@ -91,7 +95,7 @@ h22 = conv(scert,f2,'same');
 
 % Compute proper coordinates
 % The plot shows the elements of the coordinate vector c
-%c2 = inv(G2)*[h02;h12;h22];
+c2 = inv(G)*[h02;h12;h22];
 figure(7);
 subplot(3,1,1);plot(c2(1,:))
 subplot(3,1,2);plot(c2(2,:))
@@ -112,41 +116,58 @@ subplot(3,1,3);plot(diffsig2);
 % signal change alot which make the derievitive change even more. 
 
 
-%% VAD SKA VI GÖRA HÄR??
+%%
 
+h0 = conv(scert,f0,'same'); 
+h1 = conv(scert,f1,'same');
 
-G11 = sum(conv(cert,b1.*a.*b1,'same'));
-G12 = sum(conv(cert,b1.*a.*b2, 'same'));
-G22 = sum(conv(cert,b2.*a.*b2, 'same'));
-% Ehh va?? Det här stämmer nog inte
+f11 = b1.*a.*b1; f11 = f11(end:-1:1);
+f12 = b1.*a.*b2; f12 = f12(end:-1:1);
+f22 = b2.*a.*b2; f22 = f22(end:-1:1);
 
+G11 = conv(cert,f11,'same');
+G12 = conv(cert,f12,'same');
+G22 = conv(cert,f22,'same');
 
 detG = G11.*G22-G12.^2;
-c0 = (G22.*h0-G12.*h1)./detG;
-c1 = (-G12.*h0+G11.*h1)./detG; figure(7);
+c0 = (G22.*h0-G12.*h1)./detG; % inv(G)*h
+c1 = (-G12.*h0+G11.*h1)./detG; 
+figure(9);
 subplot(2,1,1);plot(c0)
 subplot(2,1,2);plot(c1)
 
+% How do you interpret the computations that are made for c0
+% and c1?
+% ANSWER: It's the inverse of G times h that give the basis c0 c1
+
+% Compare c0 and c1 from before: Now it has spikar which it didn't before. 
+
+
+% Modify the signal by removing a higher rate of the samples
+% (e.g. 50%) and see how this changes the result. How large rate of samples
+% can be removed without too much distortion in the measured coordinates
+% (c0, c1)?
+% ANSWER: Ca 30% 
 
 %% 5 Normalised averaging of images
 
 im = double(imread('Scalespace0.png'));
-figure(8);colormap(gray);imagesc(im);
+figure(10);colormap(gray);imagesc(im);
 
 
-cert = double(rand(size(im)) > 0.9); 
+cert = double(rand(size(im)) > 0.6); 
 imcert = im.*cert;
-figure(9);colormap(gray);imagesc(imcert);
+figure(11);colormap(gray);imagesc(imcert);
 
 % Applicability functian a is a low-pass filter
 x = ones(7,1)*(-3:3)
 y = x'
 a = exp(-(x.^2+y.^2)/4);
-figure(10);mesh(a);
+figure(12);mesh(a);
 
-% Low pass filtering the uncertian image
+% Low pass filtering the uncertian image with applicability function
 imlp = conv2(imcert, a, 'same');
-figure(11);colormap(gray);imagesc(imlp);
+figure(13);colormap(gray);imagesc(imlp);
 
 % ANSWER: Yes this did solve the problem with missing pixels since we
 % smudge the image.
@@ -154,9 +175,11 @@ figure(11);colormap(gray);imagesc(imlp);
 
 G = conv2(cert, a, 'same'); % We wrote this line
 c = imlp./G;
-figure(12);colormap(gray);imagesc(c);
+figure(14);colormap(gray);imagesc(c);
 
-% ANSWER: This reault is much better then before. Why: ??????????
+% ANSWER: This reault is much better then before. G include information
+% about where the missing pixels are and can from that reconstruct the
+% image. Why does it not work with imcert??
 
 
 % Change width of a: longer: More smudged
@@ -172,7 +195,3 @@ figure(12);colormap(gray);imagesc(c);
 % by 0 give NaN result.
 
 % ANSWER: When increasing the lenth of a we improve the image.
-
-
-
-

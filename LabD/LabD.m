@@ -127,15 +127,60 @@ figure(8);plot(M,epsilon);
 
 %% 3.3 Changing the frequency weighting function
 
+x = (-3:3)';
+N = 21; % Number of samples. 3 times as many as in x
+u = (-(pi - pi/N):(2*pi/N):(pi - pi/N))';
+
+B = exp(-i*u*x'); % Basis matrix. Constructed with the DFT-basis functions in its columns
+
+Fideal = (pi/4<abs(u))&(abs(u)<3*pi/4); % The ideal  filter
+figure(2);plot(u,Fideal,'o');
+title('Fideal')
+
+a1 = exp(-(u+1.5).^10);
+a12 = a(end:-1:1);
+W1 = (a1+a12);
+
+a3 = exp(-3*abs(u));
+W3 = a3;
 
 
+% The weighted function (same ass Fideal)
+figure(11);plot(u,W,'o');
+title('Weighted function')
 
 
+G0 = diag(W)/N;
+G = B'*G0*B;
+
+dualc = B'*G0*Fideal; % The dual coordinates of F(u) in the basis B
+
+c = inv(G)*dualc % The dual coordinates are transformed into proper coordinates
+figure(12);plot(x,real(c),'o'); % These  are  the  coordinates  of F(u) 
+title('Proper coordinates')
+
+F = real(B*c); % F is given as a linear combination between the optimised coefcients and the basis function
+figure(13);plot(u,[F Fideal]);
+title('F, Fideal')
 
 
+epsilon = sqrt((Fideal - F)'*G0*(Fideal- F)) % The error of the optimised filter i
 
 
+% ANSWER: epsilon = 0.1710
 
+
+%%
+x=[-3:0.1:3];
+a = exp(-(u+1.5).^10);
+a2 = a(end:-1:1);
+gauss_a = 1-(a+a2);
+figure(10)
+plot(u, gauss_a)
+
+% How does this influence F? Don't thing it gets better/worse...
+
+a = exp(-3*abs(u));
 
 
 
