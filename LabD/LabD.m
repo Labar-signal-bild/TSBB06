@@ -127,8 +127,8 @@ figure(8);plot(M,epsilon);
 
 %% 3.3 Changing the frequency weighting function
 
-x = (-3:3)';
-N = 21; % Number of samples. 3 times as many as in x
+x = (-11:11)';
+N = 231; % Number of samples. 3 times as many as in x
 u = (-(pi - pi/N):(2*pi/N):(pi - pi/N))';
 
 B = exp(-i*u*x'); % Basis matrix. Constructed with the DFT-basis functions in its columns
@@ -138,39 +138,48 @@ figure(2);plot(u,Fideal,'o');
 title('Fideal')
 
 a1 = exp(-(u+1.5).^10);
-a12 = a(end:-1:1);
-W1 = (a1+a12);
+a2 = a1(end:-1:1);
+W1 = (a1+a2);
+
+W2 = 1-(a1+a2);
 
 a3 = exp(-3*abs(u));
 W3 = a3;
 
 
-% The weighted function (same ass Fideal)
-figure(11);plot(u,W,'o');
-title('Weighted function')
+[F1 c1 G01] = getF(W1,Fideal,N,B);
+[F2 c2 G02] = getF(W2,Fideal,N,B);
+[F3 c G0] = getF(W3,Fideal,N,B);
+
+figure(11);
+subplot(2,1,1);
+plot(u,W1,'o');
+title('Weighted function 1')
+subplot(2,1,2);
+plot(u,[F1 Fideal]);
+
+figure(12);
+subplot(2,1,1);
+plot(u,W2,'o');
+title('Weighted function 2')
+subplot(2,1,2);
+plot(u,[F2 Fideal])
+
+figure(13);
+subplot(2,1,1);
+plot(u,W3,'o');
+title('Weighted function 3')
+subplot(2,1,2);
+plot(u,[F3 Fideal])
+
+epsilon = sqrt(abs((Fideal - F3)'*G0*(Fideal- F3)))
+% epsilon = 0.0288
+
+% F does not look like we expcted in all cases
 
 
-G0 = diag(W)/N;
-G = B'*G0*B;
+%% Allmän skit
 
-dualc = B'*G0*Fideal; % The dual coordinates of F(u) in the basis B
-
-c = inv(G)*dualc % The dual coordinates are transformed into proper coordinates
-figure(12);plot(x,real(c),'o'); % These  are  the  coordinates  of F(u) 
-title('Proper coordinates')
-
-F = real(B*c); % F is given as a linear combination between the optimised coefcients and the basis function
-figure(13);plot(u,[F Fideal]);
-title('F, Fideal')
-
-
-epsilon = sqrt((Fideal - F)'*G0*(Fideal- F)) % The error of the optimised filter i
-
-
-% ANSWER: epsilon = 0.1710
-
-
-%%
 x=[-3:0.1:3];
 a = exp(-(u+1.5).^10);
 a2 = a(end:-1:1);
@@ -182,8 +191,142 @@ plot(u, gauss_a)
 
 a = exp(-3*abs(u));
 
+%% 3.4 Spatial mask
+
+figure(22);plot(x,real(c),'o');grid
+
+mask = zeros(1,23)';
+A = [2, 6, 10, 12, 14, 18, 22];
+mask(A) = 1;
+S = mask2matrix(mask);
+
+% How is the matrix S constructed from the mask? 
+% ANSWER: One 1 on each row, the rest on that row is 0.
 
 
+Bmask = B*S;
+
+
+Gmask = Bmask'*G0*Bmask;
+dualc = Bmask'*G0*Fideal;
+c = inv(Gmask)*dualc;
+F = Bmask*c;
+epsilon = sqrt(abs((Fideal - F)'*G0*(Fideal- F)))
+
+% epsilon = 0.0296
+% epsilondiff = 8.0000e-04. It has increased since we took some of the
+% weights away
+
+figure(24);plot(u,[F Fideal]);
+title('F, Fideal')
+
+figure(23);plot(x,S*real(c),'o');grid
+
+%% The same code as in 3.1 but different W
+
+x = (-3:3)';
+N = 21; % Number of samples. 3 times as many as in x
+u = (-(pi - pi/N):(2*pi/N):(pi - pi/N))';
+
+B = exp(-i*u*x'); % Basis matrix. Constructed with the DFT-basis functions in its columns
+% Hur väljer man B?
+
+Fideal = (pi/4<abs(u))&(abs(u)<3*pi/4); % The ideal  filter
+figure(2);plot(u,Fideal,'o');
+title('Fideal')
+W = W3(116-10:116+10); % The weighted function (all ones)
+figure(3);plot(u,W,'o');
+title('Weighted function')
+
+
+G0 = diag(W)/N;
+G = B'*G0*B;
+
+dualc = B'*G0*Fideal; % The dual coordinates of F(u) in the basis B
+
+c = inv(G)*dualc % The dual coordinates are transformed into proper coordinates
+figure(4);plot(x,real(c),'o'); % These  are  the  coordinates  of F(u) 
+title('Proper coordinates')
+
+F = real(B*c); % F is given as a linear combination between the optimised coefcients and the basis function
+figure(5);plot(u,[F Fideal]);
+title('F, Fideal')
+
+
+epsilon = sqrt((Fideal - F)'*G0*(Fideal- F)) % The error of the optimised filter i
+
+
+% ANSWER: epsilon =  0.1665
+
+% This is worse then with the spacial mask because at the interval -3:3 W3
+% wants to do all the samples good and nothing gets good.
+
+
+%% 4 Optimisation of a 2D filter
+
+x = (-3:3);
+x1 = ones(7,1)*x;
+x2 = x1';
+N = 51;
+u = -(pi-pi/N):(2*pi/N):(pi-pi/N);
+u1 = ones(N,1)*u;
+u2 = u1';
+x1 = x1(:);x2 = x2(:); %Here matrices are reshaped into columns
+u1 = u1(:);u2 = u2(:);
+
+s = 1;
+Fideal=exp(-((u1-pi/2).^2+(u2-pi/2).^2)/s^2)+...
+exp(-((u1+pi/2).^2+(u2+pi/2).^2)/s^2);
+r = sqrt(u1.^2+u2.^2);
+W = (r + 0.1).^(-1);
+G0 = diag(W);
+B = exp(-i*(u1*x1'+u2*x2'));
+G = B'*G0*B;
+dualc = B'*G0*Fideal;
+c = inv(G)'*dualc;
+F = real(B*c);     %Since imag = 0
+epsilon = sqrt(abs((Fideal-F)'*G0*(Fideal-F)))
+
+figure(14);
+subplot(3,1,1);mesh(u,u,reshape(Fideal,N,N));
+subplot(3,1,2);mesh(u,u,reshape(F,N,N));
+subplot(3,1,3);mesh(u,u,reshape(abs(Fideal-F),N,N));
+c2D=reshape(real(c),7,7)
+figure(15);mesh(x,x,c2D);
+
+
+%%
+clear all
+
+x = (-2:2);
+x1 = ones(5,1)*x;
+x2 = x1';
+N = 51;
+u = -(pi-pi/N):(2*pi/N):(pi-pi/N);
+u1 = ones(N,1)*u;
+u2 = u1';
+x1 = x1(:);x2 = x2(:); %Here matrices are reshaped into columns
+u1 = u1(:);u2 = u2(:);
+
+s = 1;
+Fideal=exp(-((u1-pi/2).^2+(u2-pi/2).^2)/s^2)+...
+exp(-((u1+pi/2).^2+(u2+pi/2).^2)/s^2);
+r = sqrt(u1.^2+u2.^2);
+W = (r + 0.1).^(-1);
+G0 = diag(W);
+B = exp(-i*(u1*x1'+u2*x2'));
+G = B'*G0*B;
+dualc = B'*G0*Fideal;
+c = inv(G)'*dualc;
+F = real(B*c);     %Since imag = 0
+epsilon = sqrt(abs((Fideal-F)'*G0*(Fideal-F)))
+
+figure(16);
+subplot(3,1,1);mesh(u,u,reshape(Fideal,N,N));
+subplot(3,1,2);mesh(u,u,reshape(F,N,N));
+subplot(3,1,3);mesh(u,u,reshape(abs(Fideal-F),N,N));
+c2D=reshape(real(c),5,5)
+figure(17);mesh(x,x,c2D);
 
 
 

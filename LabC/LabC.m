@@ -83,7 +83,7 @@ subplot(3,1,3);plot(diffsig);
 
 % his produces a signal vector svert where 20% of the samples are set to zero
 
-cert = double(rand(1,101)>0.2);
+cert = double(rand(1,101)>0.5);
 scert = s.*cert;
 figure(6);plot(scert);
 
@@ -121,9 +121,9 @@ subplot(3,1,3);plot(diffsig2);
 h0 = conv(scert,f0,'same'); 
 h1 = conv(scert,f1,'same');
 
-f11 = b1.*a.*b1; f11 = f11(end:-1:1);
-f12 = b1.*a.*b2; f12 = f12(end:-1:1);
-f22 = b2.*a.*b2; f22 = f22(end:-1:1);
+f11 = b0.*a.*b0; f11 = f11(end:-1:1);
+f12 = b0.*a.*b1; f12 = f12(end:-1:1);
+f22 = b1.*a.*b1; f22 = f22(end:-1:1);
 
 G11 = conv(cert,f11,'same');
 G12 = conv(cert,f12,'same');
